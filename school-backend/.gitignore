@@ -1,47 +1,68 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-# Backend
-backend/target/
-backend/.idea/
-
-# Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.idea/
-
-# Common
+####################################
+# Root / Common
+####################################
 .idea/
+.vscode/
 .DS_Store
 .env
+*.log
 
+####################################
+# ===== Backend (Spring Boot) =====
+####################################
+
+# Maven / Gradle build output
+school-backend/target/
+
+# IntelliJ / STS / Eclipse
+school-backend/.idea/
+school-backend/.classpath
+school-backend/.project
+school-backend/.settings/
+school-backend/.springBeans
+school-backend/.sts4-cache
+
+# Maven wrapper jar (optional, usually ignored)
+school-backend/.mvn/wrapper/maven-wrapper.jar
+
+####################################
+# ===== Frontend (Vite + React) =====
+####################################
+
+# Node dependencies
+sih_frontend/node_modules/
+
+# Build output
+sih_frontend/dist/
+
+# IDE files
+sih_frontend/.idea/
+
+####################################
+# ===== Android (Capacitor) =====
+####################################
+sih_frontend/android/.gradle/
+sih_frontend/android/.idea/
+sih_frontend/android/build/
+sih_frontend/android/app/build/
+sih_frontend/android/local.properties
+sih_frontend/android/capacitor-cordova-android-plugins/
+
+####################################
+# ===== iOS (Capacitor) =====
+####################################
+sih_frontend/ios/capacitor-cordova-ios-plugins/
+sih_frontend/ios/App/App/public/
+sih_frontend/ios/App/App/config.xml
+sih_frontend/ios/App/App/capacitor.config.json
+
+####################################
+# ===== What MUST stay tracked =====
+####################################
+!school-backend/src/**
+!school-backend/pom.xml
+
+!sih_frontend/src/**
+!sih_frontend/public/**
+!sih_frontend/package.json
+!sih_frontend/package-lock.json
