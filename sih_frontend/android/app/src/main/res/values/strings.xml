@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">sih</string>
+    <string name="title_activity_main">sih</string>
+    <string name="package_name">com.mycompany.sih</string>
+    <string name="custom_url_scheme">com.mycompany.sih</string>
+</resources>
