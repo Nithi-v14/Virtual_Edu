@@ -27,6 +27,7 @@ const Navbar = () => {
       description: "See you soon! Stay prepared! 👋",
     });
     navigate('/login');
+    // navigate('/register')
   };
 
   const handleGamesClick = () => {

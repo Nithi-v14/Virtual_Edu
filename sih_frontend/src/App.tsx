@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import PuzzleGames from "./pages/PuzzleGames";
 import { useState } from "react";
 import AIAssistant from "./components/AIAssistant";
+import Register from "./pages/Register";
 const queryClient = new QueryClient();
   
 const App = () => (
@@ -27,6 +28,7 @@ const App = () => (
         <Layout>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register/>}/>
             <Route path="/" element={<Index />} />
             <Route path="/modules" element={<Modules />} />
             <Route path="/quiz/:moduleId" element={<QuizPage />} />

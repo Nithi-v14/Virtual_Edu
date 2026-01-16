@@ -16,6 +16,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { translations } from "@/data/translations";
+import navbar from "@/components/Navbar.tsx";
 
 type Language = 'english' | 'tamil' | 'hindi';
 
@@ -33,13 +34,14 @@ interface FormErrors {
 
 const Login = () => {
   const [currentLanguage, setCurrentLanguage] = useState<Language>('english');
-  const t = translations[currentLanguage];
+  const t = translations[currentLanguage]||translations.english;
 
   const handleLanguageChange = (language: Language) => {
     setCurrentLanguage(language);
   };
   const [studentForm, setStudentForm] = useState<LoginFormData>({
     name: '',
+    email:'',
     password: ''
   });
   
@@ -54,13 +56,14 @@ const Login = () => {
   const [showStudentPassword, setShowStudentPassword] = useState(false);
   const [showOtherPassword, setShowOtherPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const validateStudentForm = (): boolean => {
     const errors: FormErrors = {};
-    
+
     if (!studentForm.name.trim()) {
       errors.name = 'Name is required';
     } else if (studentForm.name.trim().length < 2) {
@@ -85,7 +88,7 @@ const Login = () => {
     } else if (otherUserForm.name.trim().length < 2) {
       errors.name = 'Name must be at least 2 characters';
     }
-    
+
     if (!otherUserForm.email?.trim()) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(otherUserForm.email)) {
@@ -102,85 +105,124 @@ const Login = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleStudentLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateStudentForm()) return;
-    
-    setIsLoading(true);
-    
+
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    const handleStudentLogin = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setApiError(null);
+
+      if (!validateStudentForm()) return;
+
+      try {
+        setIsLoading(true);
+
+        const res = await fetch("http://localhost:8080/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: studentForm.email,
+            password: studentForm.password,
+          }),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || "Login failed");
+        }
+
+        const data = await res.json();
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("isAuthenticated", "true");
     // Store user data in localStorage (replace with actual auth later)
-    const userData = {
-      id: Date.now().toString(),
-      name: studentForm.name,
-      type: 'student',
-      loginTime: new Date().toISOString(),
-      progress: {
-        overallScore: 0,
-        modulesCompleted: 0,
-        totalModules: 9,
-        timeSpent: "0h 0m",
-        streak: 0,
-        rank: 0,
-        totalUsers: 1247,
-        badges: [],
-        recentActivity: [],
-        weeklyProgress: [
-          { day: "Mon", modules: 0, quizzes: 0 },
-          { day: "Tue", modules: 0, quizzes: 0 },
-          { day: "Wed", modules: 0, quizzes: 0 },
-          { day: "Thu", modules: 0, quizzes: 0 },
-          { day: "Fri", modules: 0, quizzes: 0 },
-          { day: "Sat", modules: 0, quizzes: 0 },
-          { day: "Sun", modules: 0, quizzes: 0 },
-        ]
-      }
-    };
-    
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-    localStorage.setItem('isAuthenticated', 'true');
+    // const userData = {
+    //   id: Date.now().toString(),
+    //   name: studentForm.name,
+    //   type: 'student',
+    //   loginTime: new Date().toISOString(),
+    //   progress: {
+    //     overallScore: 0,
+    //     modulesCompleted: 0,
+    //     totalModules: 9,
+    //     timeSpent: "0h 0m",
+    //     streak: 0,
+    //     rank: 0,
+    //     totalUsers: 1247,
+    //     badges: [],
+    //     recentActivity: [],
+    //     weeklyProgress: [
+    //       { day: "Mon", modules: 0, quizzes: 0 },
+    //       { day: "Tue", modules: 0, quizzes: 0 },
+    //       { day: "Wed", modules: 0, quizzes: 0 },
+    //       { day: "Thu", modules: 0, quizzes: 0 },
+    //       { day: "Fri", modules: 0, quizzes: 0 },
+    //       { day: "Sat", modules: 0, quizzes: 0 },
+    //       { day: "Sun", modules: 0, quizzes: 0 },
+    //     ]
+    //   }
+    // };
+    //
+    // localStorage.setItem('currentUser', JSON.stringify(userData));
+    // localStorage.setItem('isAuthenticated', 'true');
     
     toast({
       title: "Welcome back! 🎉",
       description: `Hello ${studentForm.name}, ready to learn about disaster preparedness?`,
     });
-    
-    setIsLoading(false);
-    navigate('/dashboard');
-  };
+
+        navigate("/dashboard");
+
+      } catch (err: any) {
+        setApiError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   const handleOtherUserLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateOtherUserForm()) return;
-    
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Store user data in localStorage
-    const userData = {
-      id: Date.now().toString(),
-      name: otherUserForm.name,
-      email: otherUserForm.email,
-      type: 'other',
-      loginTime: new Date().toISOString()
-    };
-    
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-    localStorage.setItem('isAuthenticated', 'true');
-    
-    toast({
-      title: "Welcome! 👋",
-      description: `Hello ${otherUserForm.name}, you're now logged in.`,
-    });
-    
-    setIsLoading(false);
-    navigate('/dashboard');
+
+    try {
+      setIsLoading(true);
+
+      const res = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: otherUserForm.email,
+          password: otherUserForm.password,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Login failed");
+      }
+
+      const data = await res.json();
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("isAuthenticated", "true");
+
+      toast({
+        title: "Login successful",
+        description: `Welcome ${data.role}`,
+      });
+
+      navigate("/dashboard");
+    } catch (err: any) {
+      setApiError(err.message);
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: err.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -239,6 +281,12 @@ const Login = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {apiError && (
+                <div className="mb-4 p-3 rounded-md bg-red-100 border border-red-300 text-red-700 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  {apiError}
+                </div>
+            )}
             <Tabs defaultValue="student" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="student" className="flex items-center gap-2">
@@ -274,6 +322,28 @@ const Login = () => {
                         <AlertCircle className="h-3 w-3" />
                         {studentErrors.name}
                       </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="student-name">{t.emailLabel}</Label>
+                    <Input
+                        id="student-name"
+                        type="text"
+                        placeholder="Enter your email address"
+                        value={studentForm.email}
+                        onChange={(e) => {
+                          setStudentForm({ ...studentForm,email: e.target.value });
+                          if (studentErrors.email) {
+                            setStudentErrors({ ...studentErrors, email: undefined });
+                          }
+                        }}
+                        className={studentErrors.email ? "border-destructive" : ""}
+                    />
+                    {studentErrors.email&& (
+                        <div className="flex items-center gap-1 text-sm text-destructive">
+                          <AlertCircle className="h-3 w-3" />
+                          {studentErrors.email}
+                        </div>
                     )}
                   </div>
 
@@ -421,17 +491,25 @@ const Login = () => {
                       t.loginButton
                     )}
                   </Button>
+
                 </form>
+
               </TabsContent>
+
+
             </Tabs>
 
             {/* Demo Info */}
-            {/* <div className="mt-6 p-3 bg-primary/5 rounded-lg border border-primary/20">
-              <p className="text-xs text-muted-foreground text-center">
-                <strong>Demo Mode:</strong> Use any name and password to login. 
-                Student progress starts empty and builds as you complete activities.
-              </p>
-            </div> */}
+            {/* <div className="mt-6 p-3 bg-primary/5 rounded-lg border border-primary/20">*/}
+            {/*  <p className="text-xs text-muted-foreground text-center">*/}
+            {/*    <strong>Demo Mode:</strong> Use any name and password to login.*/}
+            {/*    Student progress starts empty and builds as you complete activities.*/}
+            {/*  </p>*/}
+            {/*</div>*/}
+
+            <div className="mt-3 ">
+              <button type="button" onClick={()=>navigate("/register")} className="text-x text-blue-700 hover:underline font-medium">Don't have an account?</button>
+            </div>
           </CardContent>
         </Card>
       </div>

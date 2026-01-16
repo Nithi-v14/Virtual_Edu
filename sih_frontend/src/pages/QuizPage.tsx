@@ -29,6 +29,20 @@ const QuizPage = () => {
     navigate('/modules');
     return null;
   }
+ const uploadQuestions = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("http://localhost:8080/admin/questions/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error("Upload failed");
+  };
 
   const questions = module.questions[currentLanguage];
   const currentQuestion = questions[currentQuestionIndex];
