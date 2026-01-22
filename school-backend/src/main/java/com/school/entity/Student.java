@@ -19,7 +19,7 @@ public class Student {
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
-
+    private String email;
     private String fullName;
     private String grade;
     private String schoolName;

@@ -18,7 +18,7 @@ public class Teacher {
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
-
+    private String email;
     private String fullName;
     private String subject;
     private String schoolName;

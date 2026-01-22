@@ -116,7 +116,7 @@ const Login = () => {
       try {
         setIsLoading(true);
 
-        const res = await fetch("http://localhost:8080/auth/login", {
+        const res = await fetch("http://localhost:8081/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -168,7 +168,7 @@ const Login = () => {
     
     toast({
       title: "Welcome back! 🎉",
-      description: `Hello ${studentForm.name}, ready to learn about disaster preparedness?`,
+      description: `Hello ${studentForm.name},Empowering students with STEM for real-life challenges`,
     });
 
         navigate("/dashboard");

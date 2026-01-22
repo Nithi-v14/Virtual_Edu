@@ -27,12 +27,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest request) {
+        System.out.println("Login request: " + request);
         return authService.login(request);
     }
     @GetMapping("/questions")
     public List<Question> getQuestions(
-            @RequestParam String level) {
-        return questionRepository.findByLevel(level);
+            @RequestParam String level,int limit) {
+        return questionRepository.findByLevel(level,limit);
     }
 
 }

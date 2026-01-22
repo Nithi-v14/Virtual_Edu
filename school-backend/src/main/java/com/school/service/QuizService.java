@@ -1,17 +1,13 @@
 package com.school.service;
-
-import com.school.dto.AnswerDTO;
-import com.school.dto.QuizQuestionResponse;
-import com.school.dto.QuizResultResponse;
-import com.school.dto.QuizSubmitRequest;
+import com.school.dto.*;
 import com.school.entity.Question;
 import com.school.entity.QuizAttempt;
 import com.school.repository.QuestionRepository;
 import com.school.repository.QuizAttemptRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +19,44 @@ public class QuizService {
     private final QuestionRepository questionRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final ObjectMapper objectMapper;
+    public List<QuizQuestionDTO> startQuiz(
+            String level,
+            String language,
+            int limit
+    ) {
 
+        List<Question> questions =
+                questionRepository.findRandomByLevel(level, limit);
+
+        return questions.stream().map(q -> {
+            try {
+                return QuizQuestionDTO.builder()
+                        .id(q.getId())
+                        .question(
+                                language.equalsIgnoreCase("ta")
+                                        ? q.getQuestionTa()
+                                        : q.getQuestionEn()
+                        )
+                        .options(
+                                language.equalsIgnoreCase("ta")
+                                        ? objectMapper.readValue(
+                                        q.getOptionsTa(),
+                                        new TypeReference<List<String>>() {}
+                                )
+                                        : objectMapper.readValue(
+                                        q.getOptionsEn(),
+                                        new TypeReference<List<String>>() {}
+                                )
+                        )
+                        .level(q.getLevel())
+                        .image(q.getRelatedImage())
+                        .build();
+
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse options", e);
+            }
+        }).toList();
+    }
     public List<QuizQuestionResponse> getQuizQuestions(
             String level,
             String language,
@@ -31,24 +64,33 @@ public class QuizService {
     ) throws Exception {
 
         List<Question> questions =
-                questionRepository.findByLevel(level);
+                questionRepository.findByLevel(level,limit);
 
         Collections.shuffle(questions);
 
         return questions.stream()
                 .limit(limit)
                 .map(q -> {
-                    @SuppressWarnings("unchecked")
-                    List<String> options =
-                            "ta".equals(language)
-                                    ?(List<String>)  q.getOptionsTa()
-                                    : (List<String>) q.getOptionsEn();;
+                    try {
+                        List<String> options =
+                                "ta".equalsIgnoreCase(language)
+                                        ? objectMapper.readValue(
+                                        q.getOptionsTa(),
+                                        new TypeReference<List<String>>() {})
+                                        : objectMapper.readValue(
+                                        q.getOptionsEn(),
+                                        new TypeReference<List<String>>() {});
 
-                    return new QuizQuestionResponse(
-                            q.getId(),
-                            "ta".equals(language) ? q.getQuestionTa() : q.getQuestionEn(),
-                            options
-                    );
+                        return new QuizQuestionResponse(
+                                q.getId(),
+                                "ta".equalsIgnoreCase(language)
+                                        ? q.getQuestionTa()
+                                        : q.getQuestionEn(),
+                                options
+                        );
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to parse options JSON", e);
+                    }
                 })
                 .toList();
     }

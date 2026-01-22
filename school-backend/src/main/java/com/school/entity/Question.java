@@ -26,11 +26,11 @@ public class Question {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Object optionsEn;
+    private String optionsEn;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Object optionsTa;
+    private String optionsTa;
     private Integer correctAnswer;
     private String level;
 
@@ -41,4 +41,5 @@ public class Question {
     private String explanationTa;
 
     private String relatedImage;
+
 }

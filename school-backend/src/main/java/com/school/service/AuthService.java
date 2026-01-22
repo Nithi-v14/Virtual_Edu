@@ -46,6 +46,7 @@ public class AuthService {
         if ("STUDENT".equalsIgnoreCase(req.getRole())) {
             Student student = Student.builder()
                     .user(user)
+                    .email(req.getEmail())
                     .fullName(req.getFullName())
                     .grade(req.getGrade())
                     .schoolName(req.getSchoolName())
@@ -57,6 +58,7 @@ public class AuthService {
         if ("TEACHER".equalsIgnoreCase(req.getRole())) {
             Teacher teacher = Teacher.builder()
                     .user(user)
+                    .email(req.getEmail())
                     .fullName(req.getFullName())
                     .subject(req.getSubject())
                     .schoolName(req.getSchoolName())

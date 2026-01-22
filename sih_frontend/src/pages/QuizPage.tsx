@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,140 +6,264 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Star, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { quizModules } from "@/data/quizData";
+import { fetchQuizQuestions, submitQuiz, QuizSubmissionPayload, QuizModule } from "@/api/quizApi";
 
-type Language = 'english' | 'tamil' | 'hindi';
+type Language = "en" | "ta" | "hi";
+
+interface QuizQuestion {
+  id: number;
+  question: string;
+  options: string[];
+  correctAnswer?: number;
+}
+
+interface BackendQuizQuestion {
+  id: number;
+  question: string;
+  options: string[];
+}
 
 const QuizPage = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [currentLanguage, setCurrentLanguage] = useState<Language>('english');
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<{ [key: number]: number }>({});
+  // State management - must be before any early returns
+  const [language, setLanguage] = useState<Language>("en");
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [module, setModule] = useState<QuizModule | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [submitted, setSubmitted] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
-  const [stars, setStars] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: number]: boolean }>({});
-
-  const module = quizModules.find(m => m.id === moduleId);
+  const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
+  const [submittedAnswers, setSubmittedAnswers] = useState<{questionId: number, selectedOption: number, isCorrect?: boolean}[]>([]);
+  const [score, setScore] = useState(0);
+  const [loading, setLoading] = useState(true);
   
-  if (!module) {
+  // Constants
+  const LEVEL = "beginner";
+  const LIMIT = 10;
+  const X_USER_ID = 1; // TODO: Replace with JWT user id
+
+  // Fetch module and questions from backend
+  useEffect(() => {
+    if (!moduleId) return;
+    
+    setLoading(true);
+    
+    // Create a fallback module object since backend doesn't have module endpoint
+    const fallbackModule: QuizModule = {
+      id: parseInt(moduleId),
+      title: `Module ${moduleId}`,
+      description: "Quiz Module",
+      difficulty: "beginner",
+      estimatedTime: "10 minutes",
+      icon: "📚",
+      color: "blue"
+    };
+    
+    // Only fetch questions since module endpoint doesn't exist
+    fetchQuizQuestions(LEVEL, language, LIMIT, moduleId, X_USER_ID)
+      .then((questionsData: BackendQuizQuestion[]) => {
+        setModule(fallbackModule);
+        // Convert backend format to frontend format
+        const convertedQuestions: QuizQuestion[] = questionsData.map(q => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          // correctAnswer will be determined from backend response
+        }));
+        setQuestions(convertedQuestions);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching quiz data:', error);
+        toast({
+          title: "Failed to load quiz",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+        setLoading(false);
+      });
+  }, [language, moduleId, toast]);
+  
+  if (!moduleId) {
     navigate('/modules');
     return null;
   }
- const uploadQuestions = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
 
-    const res = await fetch("http://localhost:8080/admin/questions/upload", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: formData,
-    });
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center">
+        <Card className="p-6">
+          <div className="text-center">Loading quiz...</div>
+        </Card>
+      </div>
+    );
+  }
 
-    if (!res.ok) throw new Error("Upload failed");
-  };
-
-  const questions = module.questions[currentLanguage];
-  const currentQuestion = questions[currentQuestionIndex];
+  if (!module || questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center">
+        <Card className="p-6">
+          <div className="text-center">
+            <p>No quiz questions available for this module.</p>
+            <Button onClick={() => navigate('/modules')} className="mt-4">
+              Back to Modules
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+  const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
-  const correctAnswers = Object.values(answers).filter((answer, index) => 
-    answer === questions[index]?.correctAnswer
-  ).length;
+  const progressPercentage = ((currentIndex + 1) / totalQuestions) * 100;
+  const starsEarned = Math.floor((score / 100) * 3);
 
-  const starsEarned = Math.floor((correctAnswers / totalQuestions) * 3);
-
-  const handleLanguageChange = (language: Language) => {
-    setCurrentLanguage(language);
+  const handleLanguageChange = (newLanguage: Language) => {
+    setLanguage(newLanguage);
+    setCurrentIndex(0);
+    setAnswers({});
+    setSubmitted({});
+    setShowResult(false);
   };
 
   const handleAnswerSelect = (optionIndex: number) => {
-    const newAnswers = { ...answers, [currentQuestionIndex]: optionIndex };
+    if (submitted[currentIndex]) return;
+    const newAnswers = { ...answers, [currentIndex]: optionIndex };
     setAnswers(newAnswers);
   };
 
-  const handleSubmitAnswer = () => {
-    if (answers[currentQuestionIndex] === undefined) return;
+  const handleSubmitAnswer = async () => {
+    if (answers[currentIndex] === undefined || submitted[currentIndex]) return;
 
-    setSubmittedAnswers(prev => ({ ...prev, [currentQuestionIndex]: true }));
-    setShowResult(true);
-    
-    const isCorrect = answers[currentQuestionIndex] === currentQuestion.correctAnswer;
-    
-    if (isCorrect) {
+    try {
+      const payload: QuizSubmissionPayload = {
+        level: LEVEL,
+        answers: [{
+          questionId: questions[currentIndex].id,
+          selectedOption: answers[currentIndex] + 1, // Convert to 1-based index
+        }],
+      };
+
+      const result = await submitQuiz(X_USER_ID, payload);
+      
+      // Update submitted state
+      setSubmitted(prev => ({ ...prev, [currentIndex]: true }));
+      setShowResult(true);
+      
+      // Update question with correct answer from backend response
+      const updatedQuestions = [...questions];
+      const isCorrect = result.correctAnswers > 0; // If backend says it's correct
+      updatedQuestions[currentIndex] = {
+        ...updatedQuestions[currentIndex],
+        correctAnswer: isCorrect ? answers[currentIndex] + 1 : 
+          // For wrong answers, we don't know the correct answer from backend, so set to -1
+          -1
+      };
+      setQuestions(updatedQuestions);
+      
+      if (isCorrect) {
+        toast({
+          title: "🎉 Congratulations!",
+          description: "Correct answer! Well done!",
+          className: "bg-success/10 border-success text-success-foreground"
+        });
+      } else {
+        toast({
+          title: "❌ Oops, Incorrect!",
+          description: "Don't worry, keep learning!",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting answer:', error);
       toast({
-        title: "🎉 Congratulations!",
-        description: "Correct answer! Well done!",
-        className: "bg-success/10 border-success text-success-foreground"
-      });
-    } else {
-      toast({
-        title: "❌ Oops, Incorrect!",
-        description: "Don't worry, keep learning!",
+        title: "Error submitting answer",
+        description: "Please try again.",
         variant: "destructive",
       });
     }
   };
 
   const handleNext = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
+    if (currentIndex < totalQuestions - 1) {
       setShowResult(false);
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentIndex(prev => prev + 1);
     } else {
       completeQuiz();
     }
   };
 
   const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
+    if (currentIndex > 0) {
       setShowResult(false);
-      setCurrentQuestionIndex(prev => prev - 1);
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
-  const completeQuiz = () => {
-    setQuizCompleted(true);
-    setStars(starsEarned);
-    
-    // Save completion to localStorage
-    const completedModules = JSON.parse(localStorage.getItem('completedModules') || '{}');
-    completedModules[moduleId!] = {
-      completed: true,
-      stars: starsEarned,
-      score: Math.round((correctAnswers / totalQuestions) * 100)
-    };
-    localStorage.setItem('completedModules', JSON.stringify(completedModules));
+  const completeQuiz = async () => {
+    try {
+      // Use the existing submit endpoint instead of complete endpoint
+      const payload: QuizSubmissionPayload = {
+        level: LEVEL,
+        answers: Object.entries(answers).map(([index, option]) => ({
+          questionId: questions[Number(index)].id,
+          selectedOption: option + 1, // Convert to 1-based index
+        })),
+      };
 
-    toast({
-      title: "🎊 Quiz Completed!",
-      description: `You earned ${starsEarned} out of 3 stars!`,
-    });
+      // Use submit endpoint since complete doesn't exist
+      const result = await submitQuiz(X_USER_ID, payload);
+      
+      // Backend returns: { totalQuestions, correctAnswers, score }
+      setScore(result.score || 0);
+      setCorrectAnswersCount(result.correctAnswers || 0);
+
+      setQuizCompleted(true);
+      
+      // Calculate stars based on score
+      const calculatedStars = Math.floor((result.score / 100) * 3);
+      
+      // Save completion to localStorage
+      const completedModules = JSON.parse(localStorage.getItem('completedModules') || '{}');
+      completedModules[moduleId!] = {
+        completed: true,
+        stars: calculatedStars,
+        score: result.score || 0
+      };
+      localStorage.setItem('completedModules', JSON.stringify(completedModules));
+
+      toast({
+        title: "🎊 Quiz Completed!",
+        description: `You earned ${calculatedStars} out of 3 stars!`,
+      });
+    } catch (error) {
+      console.error('Error completing quiz:', error);
+      // Fallback completion - calculate locally
+      const localScore = Math.round((Object.keys(answers).length / totalQuestions) * 100);
+      setScore(localScore);
+      setCorrectAnswersCount(Object.keys(answers).length);
+      setQuizCompleted(true);
+    }
   };
 
   const handleNextModule = () => {
     const moduleOrder = ['earthquake', 'fire', 'flood'];
-    const currentIndex = moduleOrder.indexOf(moduleId!);
+    const currentModuleIndex = moduleOrder.indexOf(moduleId!);
     
-    if (currentIndex < moduleOrder.length - 1) {
-      const nextModuleId = moduleOrder[currentIndex + 1];
+    if (currentModuleIndex < moduleOrder.length - 1) {
+      const nextModuleId = moduleOrder[currentModuleIndex + 1];
       navigate(`/quiz/${nextModuleId}`);
-      
-      // Reset quiz state
-      setCurrentQuestionIndex(0);
-      setAnswers({});
-      setQuizCompleted(false);
-      setStars(0);
-      setSubmittedAnswers({});
     } else {
       navigate('/modules');
     }
   };
 
-  const progressPercentage = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const stars = Math.floor((score / 100) * 3);
 
   if (quizCompleted) {
     return (
@@ -156,7 +280,7 @@ const QuizPage = () => {
                 <Star
                   key={star}
                   className={`h-12 w-12 ${
-                    star <= starsEarned
+                    star <= stars
                       ? 'text-yellow-400 fill-yellow-400 animate-pulse'
                       : 'text-gray-300'
                   }`}
@@ -166,10 +290,10 @@ const QuizPage = () => {
             
             <div className="space-y-2">
               <p className="text-lg font-medium">
-                Score: {Math.round((correctAnswers / totalQuestions) * 100)}%
+                Score: {score}%
               </p>
               <p className="text-muted-foreground">
-                {correctAnswers} out of {totalQuestions} correct
+                {correctAnswersCount} out of {totalQuestions} correct
               </p>
             </div>
           </div>
@@ -221,14 +345,14 @@ const QuizPage = () => {
             </div>
             
             {/* Language Selector */}
-            <Select value={currentLanguage} onValueChange={(value: Language) => handleLanguageChange(value)}>
+            <Select value={language} onValueChange={handleLanguageChange}>
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="english">English</SelectItem>
-                <SelectItem value="tamil">தமிழ்</SelectItem>
-                <SelectItem value="hindi">हिंदी</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="ta">தமிழ்</SelectItem>
+                <SelectItem value="hi">हिंदी</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -236,7 +360,7 @@ const QuizPage = () => {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Question {currentQuestionIndex + 1} of {totalQuestions}</span>
+              <span className="text-muted-foreground">Question {currentIndex + 1} of {totalQuestions}</span>
               <span className="font-medium">{Math.round(progressPercentage)}%</span>
             </div>
             <Progress value={progressPercentage} className="h-3" />
@@ -248,7 +372,9 @@ const QuizPage = () => {
               <Star
                 key={star}
                 className={`h-8 w-8 ${
-                  star <= Math.floor((correctAnswers / totalQuestions) * 3)
+                  star <= Math.floor((Object.values(answers).filter((answer, index) =>
+                    answer === questions[index]?.correctAnswer
+                  ).length / Math.max(totalQuestions, 1)) * 3)
                     ? 'text-yellow-400 fill-yellow-400'
                     : 'text-gray-300'
                 }`}
@@ -266,21 +392,21 @@ const QuizPage = () => {
                 {questions.map((_, index) => (
                   <Button
                     key={index}
-                    variant={currentQuestionIndex === index ? "default" : "outline"}
+                    variant={currentIndex === index ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setCurrentQuestionIndex(index)}
+                    onClick={() => setCurrentIndex(index)}
                     className={`relative ${
-                      submittedAnswers[index] 
-                        ? answers[index] === questions[index].correctAnswer
+                      submitted[index] 
+                        ? answers[index] + 1 === questions[index].correctAnswer
                           ? 'bg-green-100 border-green-500 text-green-700'
                           : 'bg-red-100 border-red-500 text-red-700'
                         : ''
                     }`}
                   >
                     Q{index + 1}
-                    {submittedAnswers[index] && (
+                    {submitted[index] && (
                       <div className="absolute -top-1 -right-1">
-                        {answers[index] === questions[index].correctAnswer ? (
+                        {answers[index] + 1 === questions[index].correctAnswer ? (
                           <Check className="h-3 w-3 text-green-600" />
                         ) : (
                           <X className="h-3 w-3 text-red-600" />
@@ -292,7 +418,7 @@ const QuizPage = () => {
               </div>
               <Button
                 onClick={completeQuiz}
-                disabled={Object.keys(submittedAnswers).length < totalQuestions}
+                disabled={Object.keys(submitted).length < totalQuestions}
                 className="w-full mt-4 bg-primary text-primary-foreground"
               >
                 Finish Quiz
@@ -318,16 +444,16 @@ const QuizPage = () => {
                       key={index}
                       variant="outline"
                       className={`w-full text-left justify-start p-4 h-auto ${
-                        submittedAnswers[currentQuestionIndex] && answers[currentQuestionIndex] === index
-                          ? answers[currentQuestionIndex] === currentQuestion.correctAnswer
+                        submitted[currentIndex] && answers[currentIndex] === index
+                          ? answers[currentIndex] + 1 === currentQuestion.correctAnswer
                             ? 'bg-green-100 border-green-500 text-green-700'
                             : 'bg-red-100 border-red-500 text-red-700'
-                          : answers[currentQuestionIndex] === index
+                          : answers[currentIndex] === index
                           ? 'bg-accent'
                           : 'hover:bg-accent'
                       }`}
                       onClick={() => handleAnswerSelect(index)}
-                      disabled={submittedAnswers[currentQuestionIndex]}
+                      disabled={submitted[currentIndex]}
                     >
                       <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
                       {option}
@@ -336,26 +462,26 @@ const QuizPage = () => {
                 </div>
 
                 {/* Result Feedback */}
-                {showResult && submittedAnswers[currentQuestionIndex] && answers[currentQuestionIndex] !== undefined && (
+                {showResult && submitted[currentIndex] && answers[currentIndex] !== undefined && (
                   <div className={`p-4 rounded-lg border ${
-                    answers[currentQuestionIndex] === currentQuestion.correctAnswer
+                    answers[currentIndex] + 1 === currentQuestion.correctAnswer
                       ? 'bg-green-50 border-green-200'
                       : 'bg-red-50 border-red-200'
                   }`}>
                     <div className="flex items-center space-x-2">
-                      {answers[currentQuestionIndex] === currentQuestion.correctAnswer ? (
+                      {answers[currentIndex] + 1 === currentQuestion.correctAnswer ? (
                         <Check className="h-5 w-5 text-green-600" />
                       ) : (
                         <X className="h-5 w-5 text-red-600" />
                       )}
                       <span className={`font-medium ${
-                        answers[currentQuestionIndex] === currentQuestion.correctAnswer
+                        answers[currentIndex] + 1 === currentQuestion.correctAnswer
                           ? 'text-green-700'
                           : 'text-red-700'
                       }`}>
-                        {answers[currentQuestionIndex] === currentQuestion.correctAnswer
+                        {answers[currentIndex] + 1 === currentQuestion.correctAnswer
                           ? '🎉 Correct! Well done!'
-                          : '❌ Incorrect. The correct answer is: ' + currentQuestion.options[currentQuestion.correctAnswer]
+                          : '❌ Incorrect. Don\'t worry, keep learning!'
                         }
                       </span>
                     </div>
@@ -367,7 +493,7 @@ const QuizPage = () => {
                   <Button
                     variant="outline"
                     onClick={handlePrevious}
-                    disabled={currentQuestionIndex === 0}
+                    disabled={currentIndex === 0}
                   >
                     <ChevronLeft className="h-4 w-4 mr-2" />
                     Previous
@@ -375,7 +501,7 @@ const QuizPage = () => {
                   
                   <Button
                     onClick={handleSubmitAnswer}
-                    disabled={answers[currentQuestionIndex] === undefined || submittedAnswers[currentQuestionIndex]}
+                    disabled={answers[currentIndex] === undefined || submitted[currentIndex]}
                     className="bg-primary text-primary-foreground"
                   >
                     Submit
@@ -383,11 +509,11 @@ const QuizPage = () => {
 
                   <Button
                     onClick={handleNext}
-                    disabled={!submittedAnswers[currentQuestionIndex]}
+                    disabled={!submitted[currentIndex]}
                     className="bg-primary text-primary-foreground"
                   >
-                    {currentQuestionIndex === totalQuestions - 1 ? 'Finish Quiz' : 'Next'}
-                    {currentQuestionIndex < totalQuestions - 1 && (
+                    {currentIndex === totalQuestions - 1 ? 'Finish Quiz' : 'Next'}
+                    {currentIndex < totalQuestions - 1 && (
                       <ChevronRight className="h-4 w-4 ml-2" />
                     )}
                   </Button>
