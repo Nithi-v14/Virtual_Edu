@@ -62,7 +62,7 @@ VirtualEdu solves this by providing:
 
 ## 🧩 System Architecture
 ## System Architecture
-![Architecture]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/519a0d055ffd5714433afdebb28435fab18d1aa2/WhatsApp%20Image%202026-02-06%20at%206.01.23%20PM.jpeg))
+![Architecture](https://github.com/Nithi-v14/Virtual_Edu/blob/519a0d055ffd5714433afdebb28435fab18d1aa2/WhatsApp%20Image%202026-02-06%20at%206.01.23%20PM.jpeg)
 ---
 
 ## ✨ Features
@@ -100,17 +100,17 @@ VirtualEdu solves this by providing:
 
 ## 📷 Screenshots
 ## Login
-![Login]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20175006.png))
+![Login](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20175006.png)
 ### Dashboard
 ![Dashboard](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174742.png)
 
 ### Quiz Page
-![Quiz]([./screenshots/quiz.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174805.png))
+![Quiz](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174805.png)
 
 ### AR Simulation
-![Simulation]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174834.png))
-![Simulation]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174857.png))
-![Simulation]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174952.png))
+![Simulation](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174834.png)
+![Simulation](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174857.png)
+![Simulation](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174952.png)
 
 
 ---
