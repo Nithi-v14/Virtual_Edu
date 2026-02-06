@@ -61,17 +61,8 @@ VirtualEdu solves this by providing:
 ---
 
 ## 🧩 System Architecture
-
-```
-Unity WebGL (AR Simulation)
-        ↓ REST API
-React Frontend (Dashboard & Quiz)
-        ↓
-Spring Boot Backend
-        ↓
-PostgreSQL Database
-```
-
+## System Architecture
+![Architecture]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/519a0d055ffd5714433afdebb28435fab18d1aa2/WhatsApp%20Image%202026-02-06%20at%206.01.23%20PM.jpeg))
 ---
 
 ## ✨ Features
@@ -108,17 +99,19 @@ PostgreSQL Database
 ---
 
 ## 📷 Screenshots
-
+## Login
+![Login]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20175006.png))
 ### Dashboard
-![Dashboard](./screenshots/dashboard.png)
+![Dashboard](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174742.png)
 
 ### Quiz Page
-![Quiz](./screenshots/quiz.png)
+![Quiz]([./screenshots/quiz.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174805.png))
 
 ### AR Simulation
-![Simulation](./screenshots/simulation.png)
+![Simulation]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174834.png))
+![Simulation]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174857.png))
+![Simulation]([./screenshots/simulation.png](https://github.com/Nithi-v14/Virtual_Edu/blob/5a90aae918703ef1aedbbd4a93fd8e9aac7af11a/Screenshot%202026-02-06%20174952.png))
 
-> 📌 *Add your screenshots to the `screenshots/` folder to display them here.*
 
 ---
 
@@ -220,7 +213,7 @@ npm run dev
 
 ## 👨‍💻 Author
 
-**Nithi**
+Nithish.V
 🎓 Computer Science Student
 💡 AR/VR & Full-Stack Developer
 
@@ -235,5 +228,4 @@ If you like this project:
 - 🧠 **Share** feedback
 
 ---
-
 > Built with ❤️ for education and innovation.
